@@ -1,3 +1,3 @@
-# Quiz App using React Native with Redux
+# Quiz App with React Native and Redux
 
 Quiz is time-pressured and easy to configure.
