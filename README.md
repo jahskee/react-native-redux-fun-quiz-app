@@ -1,1 +1,1 @@
-# Fun Quiz App
+# Fun Quiz App with React-Native and Redux
