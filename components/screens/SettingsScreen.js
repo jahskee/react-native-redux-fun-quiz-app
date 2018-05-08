@@ -1,13 +1,12 @@
 /*jshint esversion: 6 */
 import React from "react";
 import { Button, View, KeyboardAvoidingView, StyleSheet, Text, TextInput } from "react-native";
+import {connect} from 'react-redux'
+import { updateSettings} from '../redux/actions'
 import Ionicons from "react-native-vector-icons/Ionicons";
 import Config, { Color } from "../utils/Config";
 
-export default class SettingsScreen extends React.Component {
-  state = {
-    maxQuestions: global.maxQuestions,
-  }
+class SettingsScreen extends React.Component {
 
   static navigationOptions = {
     headerTitle: "Settings",
@@ -22,6 +21,7 @@ export default class SettingsScreen extends React.Component {
   render() { 
     return (
       <KeyboardAvoidingView style={styles.container}>
+       
         <Text style={styles.text}>Max Questions</Text>
         
         <TextInput
@@ -29,27 +29,21 @@ export default class SettingsScreen extends React.Component {
           onChangeText={ value => 
             {
               if(value < 1 || !value) {
-                value = 1
-                
+                value = 1                
               };
-              if(value > 20) {
-                value = 20;         
-
+              if(value > 10) {
+                value = 10;         
               }
-              this.setState({maxQuestions: parseInt(value)})
-              global.maxQuestions = parseInt(value)
-           
-             
+              this.props.updateSettings({max_questions: parseInt(value)})             
             }
           }
-          value={''+this.state.maxQuestions}
+          value={''+this.props.settings.max_questions}
           keyboardType = 'numeric'
-            autoFocus = {true}
-                maxLength = {2}
-                />
+          selectTextOnFocus = {false}
+          maxLength = {2}
+        />
 
-          <Button style={{marginTop: 60}} title='Ok' onPress={()=>{ 
-            //this.props.navigation.navigate("QuizPage", {...this.props, category: 'Science' })}
+          <Button style={{marginTop: 60}} title='Back' onPress={()=>{ 
             this.props.navigation.navigate("QuizCategory")}
           }/>
       </KeyboardAvoidingView>
@@ -69,3 +63,10 @@ const styles = StyleSheet.create({
     paddingBottom: 5,
   }
 });
+
+const mapStateToProps = state => ({
+  settings: state.settings,
+})
+export default connect(mapStateToProps, {
+  updateSettings, 
+})(SettingsScreen)

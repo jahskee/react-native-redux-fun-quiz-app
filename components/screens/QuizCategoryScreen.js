@@ -8,6 +8,7 @@ import {
   TouchableOpacity
 } from "react-native";
 import {connect} from 'react-redux'
+import { updateState } from '../redux/actions'
 
 import utils from "../utils/utils";
 import PropTypes from "prop-types";
@@ -27,7 +28,7 @@ class QuizCategoryScreen extends React.Component {
         <Text style={styles.title}>Select Category</Text>
         <FlatList
           renderItem={obj => (
-            <Category item={obj.item} navigation={this.props.navigation} />
+            <Category item={obj.item} navigation={this.props.navigation} updateState={this.props.updateState}/>
           )}
           data={this.props.categories}
         />
@@ -40,7 +41,8 @@ const Category = props => {
   return (
     <TouchableOpacity
       onPress={() => {
-        props.navigation.navigate("QuizPage", { category: props.item })
+        props.updateState({category: props.item.name})
+        props.navigation.navigate("QuizPage")
        }
       }
     >
@@ -82,9 +84,10 @@ const styles = StyleSheet.create({
   }
 });
 
-
 const mapStateToProps = state => ({
   categories: state.categories,
 })
 
-export default connect(mapStateToProps)(QuizCategoryScreen)
+export default connect(mapStateToProps, {
+  updateState,
+})(QuizCategoryScreen)

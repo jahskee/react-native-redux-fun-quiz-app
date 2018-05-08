@@ -1,29 +1,35 @@
 import { createStore } from "redux";
 
-import { 
-    updateCategories, 
-    updateQuiz, 
-    updateTimer,
-    updateState,  
+import {
+  updateCategories,
+  updateQuiz,
+  updateTimer,
+  updateState,
+  updateSettings
 } from "./actions";
 import reducer from "./reducer";
-
 import API from "../api/api";
 
-const TIME_ALLOWED_MIN = 0;
-const TIME_ALLOWED_SEC = 8;
-
+// default setting values
+const MAX_MIN = 0;
+const MAX_SEC = 8;
+const MAX_QUESTIONS = 5;
 
 const store = createStore(reducer);
 
-/*
-store.dispatch(addContact({name: 'jordan h', phone: '1234567890'}))
-store.dispatch(addContact({name: 'jordan h', phone: '1234567890'}))
-store.dispatch(addContact({name: 'david m', phone: '5050505050'}))
-*/
-categories = API.getCategories();
+// ================ Initialize Store ==================
 
+// initialize store with values
+categories = API.getCategories();
 store.dispatch(updateCategories(categories));
+
+store.dispatch(
+  updateSettings({
+    max_min: MAX_MIN,
+    max_sec: MAX_SEC,
+    max_questions: MAX_QUESTIONS
+  })
+);
 
 store.dispatch(
   updateQuiz({
@@ -34,21 +40,22 @@ store.dispatch(
 );
 
 store.dispatch(
-  updateTimer({ 
-    min: TIME_ALLOWED_MIN,
-    sec: TIME_ALLOWED_SEC    
+  updateTimer({
+    min: MAX_MIN,
+    sec: MAX_SEC
   })
 );
 
-store.dispatch(updateState({
+store.dispatch(
+  updateState({
     button: "Start",
     answer: "",
     counter: 1,
-    category: '',
-}))
+    category: ""
+  })
+);
 
-//console.log("Redux Store:");
+// ================ Initialize Store ==================
+
 console.log(store.getState());
-export const initStore = {...store};
-
 export default store;

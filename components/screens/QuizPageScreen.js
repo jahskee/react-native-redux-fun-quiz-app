@@ -11,16 +11,11 @@ import {
 } from "react-native";
 import {connect} from 'react-redux'
 import {updateState, updateTimer, updateQuiz} from '../redux/actions'
-import store, { initStore } from '../redux/store'
+import store from '../redux/store'
 
 import { Color } from "../utils/Config";
 import PropTypes from "prop-types";
 import API from "../api/api";
-
-// These variable settings was added here on top to highlight or signify importance
-const TIME_ALLOWED_MIN = 0;
-const TIME_ALLOWED_SEC = 8;
-
 
 // Start of class
 class QuizPageScreen extends React.Component {
@@ -32,28 +27,23 @@ class QuizPageScreen extends React.Component {
       headerTintColor: Color.primary
     };
   };
- 
-  componentWillUnmount() { 
+  
+  onPressStart = () => {  
     clearInterval(this.interval);
-    clearInterval(this.interval2);
-  }
+    clearInterval(this.interval2);  
 
-  onPressStart = () => {
     this.selectedAnswers = [];
     this.totalCorrect = 0;
 
-
-    this.question = null;
-    console.log(store.getState())
+    this.question = null;   
     this.indexes = shuffledQuizIndexes(this.props.quiz.totalQuestions);
    
-    category = this.props.navigation.state.params.category // prod   
-    this.props.updateState({category: category, button: "Cancel"})
-
-    // run and can be interrupted at every 10ms chuck 
+    this.props.updateState({button: "Cancel"})
+   
+    // run async and possible interruption at every 10ms chuck    
     this.interval = setInterval(this.runInterval(), 10);
 
-    // run timer on separate async event / virt thread tate
+    // run async timer
     this.interval2 = setInterval(this.runTimer, 1000);
 
   };
@@ -61,7 +51,7 @@ class QuizPageScreen extends React.Component {
   runTimer = () => {
     timer = { ...this.props.timer };
     if (timer.sec === 0) {
-      timer.sec = TIME_ALLOWED_SEC;
+      timer.sec = this.props.settings.max_sec;
     } else {
       timer.sec = timer.sec - 1;
     } 
@@ -69,12 +59,17 @@ class QuizPageScreen extends React.Component {
   }
 
   runInterval = () => {
-  
-
+    
     //kick-start question, run once    
     if(this.question === null) {
-      this.question = API.getQuestion(category.name, this.indexes[this.props.state.counter - 1]);
-      this.props.updateQuiz({question: this.question});    
+
+      // reset timer
+      const {max_min, max_sec } = this.props.settings
+      this.props.updateTimer({min: max_min, sec: max_sec})
+    
+      this.question = API.getQuestion(this.props.state.category, 
+                                      this.indexes[this.props.state.counter - 1]);
+      this.props.updateQuiz({question: this.question}); 
     }
 
     //replenish with new question when timer reaches min=0, sec=0  
@@ -82,7 +77,7 @@ class QuizPageScreen extends React.Component {
 
     if (timer_reached_zero) {
 
-       this.question = API.getQuestion(category.name, this.indexes[this.props.state.counter - 1]);     
+       this.question = API.getQuestion(this.props.state.category, this.indexes[this.props.state.counter - 1]);     
        this.props.updateQuiz({question: this.question});
          
         // capture answered questions and compute total correct
@@ -124,26 +119,29 @@ class QuizPageScreen extends React.Component {
           this.props.updateState( {
             button: "Start",
             answer: "",
-            counter: 1,
-            category: '',
+            counter: 1,          
           });
 
-          this.props.navigation.navigate("ViewResult", {
-            category: {name: category.name},
+          this.props.navigation.navigate("ViewResult", {           
             quizResult: this.quizResult
           });         
           return this.runInterval;
         } else {
 
           this.props.updateState({counter: this.props.state.counter + 1})
-          this.props.updateTimer({min: TIME_ALLOWED_MIN, sec: TIME_ALLOWED_SEC})
+          this.props.updateTimer({min: this.props.settings.max_min, sec: this.props.settings.max_sec})
           
-          this.question = API.getQuestion(category.name, this.indexes[this.props.state.counter - 1]);       
+          this.question = API.getQuestion(this.props.state.category, this.indexes[this.props.state.counter - 1]);       
           this.props.updateQuiz({question: this.question})
           this.props.updateState({answer: ''})        
         }      
     }   
     return this.runInterval
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.interval);
+    clearInterval(this.interval2);
   }
 
   onViewResult = () => {
@@ -152,7 +150,6 @@ class QuizPageScreen extends React.Component {
   };
 
   onAnswer = answer => {
-    console.log(answer)
     this.props.updateState({answer})
   };
 
@@ -166,34 +163,12 @@ class QuizPageScreen extends React.Component {
     this.onSubmitAnswer()
   }
 
-
-  onCancel = () => {
-    this.resetReduxStore();   
-    clearInterval(this.interval);
-    clearInterval(this.interval2);
-    this.props.navigation.navigate("QuizPage", {});
+  onCancel = () => {   
+    this.props.updateState({button: 'Start', counter: 1})  
+    this.props.navigation.navigate("QuizPage");
   };
 
-  resetReduxStore() {
-    this.props.updateQuiz({
-        totalQuestions: 5,
-        question: {},
-        totalCorrect: 0
-    })      
-    this.props.updateTimer({ 
-        min: TIME_ALLOWED_MIN,
-        sec: TIME_ALLOWED_SEC    
-    })        
-    this.props.updateState({
-        button: "Start",
-        answer: "",
-        counter: 1,
-        category: '',
-    })    
-  }
-
   render() {
-
     return (
       <View style={styles.container}>
         <ScrollView>
@@ -456,6 +431,7 @@ const mapStateToProps = state => ({
   timer: state.timer,
   state: state.state,
   quiz: state.quiz,  
+  settings: state.settings,
 })
 
 export default connect(mapStateToProps, {

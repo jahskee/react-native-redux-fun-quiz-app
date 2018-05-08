@@ -11,16 +11,13 @@ import {
 import { Color } from "../utils/Config";
 import PropTypes from "prop-types";
 import API from "../api/api";
+import store from '../redux/store'
 
 import {connect} from 'react-redux'
-import {updateState, incrementCount} from '../redux/actions'
+import { updateTimer, updateQuizResult} from '../redux/actions'
 
-export default class ViewResultScreen extends React.Component {
-  state = { 
-    ...this.props.navigation.state.params.quizResult,     
-  };
-
- 
+class ViewResultScreen extends React.Component {
+  
   static navigationOptions = ({ navigation }) => {
     return {
       headerTitle: "View Result",
@@ -28,11 +25,14 @@ export default class ViewResultScreen extends React.Component {
     };
   };
 
-  onStartAgan = () => {
-   
-    category = this.props.navigation.state.params.category
-    this.props.navigation.navigate("QuizPage", { category})
-    console.log(this.props.navigation)
+  componentDidMount() {    
+    const {quizResult} = this.props.navigation.state.params
+    this.props.updateQuizResult(quizResult) 
+  }
+
+  onStartAgan = () => {        
+    this.props.updateTimer({min: 0, sec: 8})
+    this.props.navigation.navigate("QuizPage", {});  
   }
 
   render() {
@@ -41,10 +41,10 @@ export default class ViewResultScreen extends React.Component {
       <View style={styles.container}>
         <View style={{ marginBottom: 10 }}>
           <Text style={styles.result}>
-            Total Correct: {this.state.totalCorrect}
+            Total Correct: {this.props.quizResult.totalCorrect}
           </Text>
           <Text style={styles.result}>
-            Total Questions: {this.state.totalQuestions}
+            Total Questions: {this.props.quizResult.totalQuestions}
           </Text>
           <Button title='Start Again' onPress={this.onStartAgan}/>
         </View>
@@ -52,7 +52,7 @@ export default class ViewResultScreen extends React.Component {
         <FlatList
           style={{ marginTop: 5, flex: 1, width: 300 }}
           renderItem={obj => <ResultRow item={obj.item} />}
-          data={this.state.selectedAnswers}
+          data={this.props.quizResult.selectedAnswers}
         />
       </View>
     );
@@ -72,8 +72,7 @@ const ResultRow = props => {
           Answer: {props.item.answerLong}
         </Text>
         
-        <ShowCorrect item={props.item}/>
-        
+        <ShowCorrect item={props.item}/>        
       
       </View>
     </View>
@@ -102,7 +101,16 @@ const styles = StyleSheet.create({
   },
   result: {
     fontSize: 20,
-    fontWeight: "bold"
-    //paddingBottom: 20,
+    fontWeight: "bold"  
   }
 });
+
+const mapStateToProps = state => ({
+  quizResult: state.quizResult,
+  state: state.state
+})
+
+export default connect(mapStateToProps, {   
+  updateTimer,
+  updateQuizResult,
+})(ViewResultScreen)
